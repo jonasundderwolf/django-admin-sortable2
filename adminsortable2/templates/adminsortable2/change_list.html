@@ -1,6 +1,12 @@
 {% extends "admin/change_list.html" %}
 
-{% block content %}
+{% block extrahead %}
 	{{ block.super }}
-	<a id="adminsortable_update_url" href="adminsortable_update/"></a>
+	<script type="text/javascript">
+		window.admin_sortable2 = {
+			update_url: '{{ sortable_update_url }}',
+			current_page: {{ cl.page_num | add:'1' }},
+			total_pages: {{ cl.paginator.num_pages }}
+		};
+	</script>
 {% endblock %}

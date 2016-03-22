@@ -3,6 +3,7 @@
 ====================
 Using Admin Sortable
 ====================
+
 This Django module offers three mixin classes to be added to the existing classes of your model
 admin:
 
@@ -14,8 +15,10 @@ They slightly modify the admin views of a sortable model. There is no need to de
 class from a special base model class. You can use your existing ordered field, just as you always
 did, or add a new one with any name you like, if needed.
 
+
 Integrate your models
 =====================
+
 Each database model which shall be sortable, requires a position value in its model description.
 Rather than defining a base class, which contains such a positional value in a hard coded field,
 this module lets you reuse existing sort fields or define a new field for the sort value.
@@ -56,6 +59,7 @@ are not recommended.
 
 .. warning:: Do not make this field unique! See below why.
 
+
 In Django's Admin, make the list view sortable
 ==============================================
 
@@ -65,12 +69,14 @@ on any item and vertically drag that item to a new position.
 .. figure:: _static/list-view.png
    :alt: Sortable List View
 
+
 Sortable List View
 ------------------
 
 If one or more items shall be moved to another page, this can easily been done by selecting them
 though the action checkbox. Then the user shall click on a predefined action from the pull down
 menu on the top of the list view.
+
 
 Integrate into a list view
 ..........................
@@ -92,6 +98,7 @@ That's it! The list view of the model admin interface now adds a column with a s
 By clicking on that area, the user can move that row up or down. If he wants to move it to another
 page, he can do that as a bulk operation, using the admin actions.
 
+
 Make a stacked or tabular inline view sortable
 ==============================================
 
@@ -104,11 +111,13 @@ rows then can be moved up and down.
 .. figure:: _static/tabular-inline.png
    :alt: Sortable Tabular Inlines
 
+
 Sortable Tabular Inlines
 ------------------------
 
 After moving a tabular or stacked inline, save the model form to persist
 its sorting order.
+
 
 Integrate into a detail view
 ............................
@@ -129,6 +138,7 @@ Integrate into a detail view
 
 Initial data
 ============
+
 In case you just changed your model to contain an additional sorting
 field (e.g. ``my_order``), which does not yet contain any values, then
 you **must** set initial ordering values.
@@ -141,7 +151,7 @@ the ordering field:
 	shell> ./manage.py reorder my_app.models.MyModel
 
 If you prefer to do a one-time database migration, just after having added the ordering field 
-to the model, then create a datamigration:
+to the model, then create a datamigration. For Django < 1.6, using South:
 
 .. code:: python
 
@@ -157,6 +167,47 @@ file and change it into a data migration:
 	        for order, obj in enumerate(orm.MyModel.objects.iterator(), start=1):
 	            obj.my_order = order
 	            obj.save()
+
+And for Django 1.6 and up above:
+
+..code:: python
+
+	shell> ./manage.py makemigrations myapp
+
+this creates **non** empty migration named somethin like ``migrations/0123_auto_20160208_054.py``.
+
+Edit the
+file and change it into a data migration:
+
+.. code:: python
+
+	def reorder(apps, schema_editor):
+	    MyModel = apps.get_model("myapp", "MyModel")
+	    order = 0
+	    for item in MyModel.objects.all():
+	        order += 1
+	        item.my_order = order
+	        item.save()
+	
+
+#then add to operations list, after migrations.AddField — migrations.RunPython(reorder), and add initial = True, like so:
+
+.. code:: python
+
+	class Migration(migrations.Migration):
+	    initial = True
+	    dependencies = [
+	        ...
+	    ]
+	    operations = [
+	        migrations.AlterModelOptions(
+	            ....
+	        ),
+	        migrations.AddField(
+				...
+	        ),
+	        migrations.RunPython(reorder),
+	    ]
 
 then apply the changes to the database using:
 
